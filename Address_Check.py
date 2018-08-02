@@ -9,7 +9,7 @@ import random
 waitlist = ['Wanna go get some press covfefe... and come back? Just kidding!',
             'This will be ready soon! No need for another Snapchat...',
             'Good things happen after you wait a gazillion years, OR you make them happen!',
-            'A few more minutes... ...']
+            'A few more seconds... ...']
 print(random.choice(waitlist))
 from tkinter.ttk import *
 from pandas import ExcelFile, ExcelWriter, merge
@@ -211,7 +211,7 @@ New York, NY 10003")
           geocode_result[0]['geometry']['location']['lng'])
 
     # print(geocode_result)
-    print("DFrame\n\n", df.head())
+    # print("DFrame\n\n", df.head())
     # Dictionary of boros to be used in for Addresses.
     Boros = {1: 'Manhattan', 2: 'Bronx', 3: 'Brooklyn',
              4: 'Queens', 5: 'Staten Island', 9: 'New York'}
@@ -283,9 +283,9 @@ New York, NY 10003")
     # the last bit maps boro code to borough name
     df['NameAddress'] = (df.trade2.fillna('') + ', ' +
                          df['temp_add'] + df['no_city'] +
-                         ', ' + df['no_state'] + df['no_zip'].apply(str))
+                         ', ' + df['no_state'] + ' ' + df['no_zip'].apply(str))
     df['Address'] = (df['temp_add'] + df['no_city'] +
-                     ', ' + df['no_state'] + df['no_zip'].apply(str))
+                     ', ' + df['no_state'] + ' ' + df['no_zip'].apply(str))
     df['NameAddress'].head()
     #   print(df.head())
 
@@ -334,11 +334,10 @@ New York, NY 10003")
     startTime = time.time()
 
     directory = path.dirname(output.get())
-
+    count_query = 0
     for var in add_list:
         print('Started checking variable ', var)
         i += 1
-        count_query = 0
         for index, row in df_unique.iterrows():
             # set index <= len(df_unique.index) to process all observations.
             if index <= len(df_unique.index) and not(var in ['Address'] and row['Generated_streetaddress'] == ''):
@@ -443,7 +442,7 @@ New York, NY 10003")
 
     endTime = time.time()
     t = (endTime - startTime) / 60
-    status.set('Took %s minutes to run.' % round(t, 2))
+    status.set('Status: Done. It took %s minutes to make %s queries.' % (round(t, 2), count_query))
     print('Took %s minutes to run.' % round(t, 2))
 
 
