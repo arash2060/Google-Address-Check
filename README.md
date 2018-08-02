@@ -7,3 +7,6 @@ The current version reads an excel file and outputs another excel file. You can 
 Since Google API is not free, and API queries are not fast, I use this program to geocode addresses when the addresses are not found in other systems, like NYC GBAT, because of typos and changed addresses.
 
 Another advantage of this program is that it can search for business names in Google Maps.
+
+# Preview
+See preview.png
