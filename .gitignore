@@ -1,0 +1,3 @@
+#Enable below to ignore .gitignore itself.
+#.gitignore
+Address_Check.log
