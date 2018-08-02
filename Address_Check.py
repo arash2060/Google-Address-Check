@@ -341,7 +341,7 @@ New York, NY 10003")
         count_query = 0
         for index, row in df_unique.iterrows():
             # set index <= len(df_unique.index) to process all observations.
-            if index <= 20 and not(var in ['Address'] and row['Generated_streetaddress'] == ''):
+            if index <= len(df_unique.index) and not(var in ['Address'] and row['Generated_streetaddress'] == ''):
                 geocode_result = gmaps.geocode(row[var])
                 count_query += 1
                 status.set("Status: looking up observation %s of %s" % (count_query, obs))

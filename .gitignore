@@ -1,3 +1,6 @@
 #Enable below to ignore .gitignore itself.
 #.gitignore
 Address_Check.log
+
+# This file keeps the api keys so that you don't have to enter it every time.
+API_Keys.cfg
