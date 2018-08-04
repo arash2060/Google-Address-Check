@@ -97,12 +97,13 @@ def browsexlsx():
 
     root1 = Tk()
     root1.withdraw()
-# possible other option: multifule=1
-    filenames = askopenfilename(parent=root, filetypes=(("Excel files", "*.xls*"), ("All files", "*.*")),
+    # possible other option: multifile=1
+    # '.xls*' doesn't work on Mac.
+    filenames = askopenfilename(parent=root, filetypes=[('Excel files', ['.xlsx','.xls']), ('All files', '.*')],
                                 initialdir=path.dirname(r"Z:\EAD\DOL Data\QCEW to RPAD address merge\forgbat"))
-#    response = root1.tk.splitlist(filenames)
-#    for f in response:
-#        print(f)
+    # response = root1.tk.splitlist(filenames)
+    # for f in response:
+    #     print(f)
     print(filenames)
     set_text(filenames)
 
@@ -170,6 +171,7 @@ def loadfields():
         combs[i][1]['values'] = sorted(collist, key=keyfunction)
         choose_default(i, collist, defaults[i])
     chk['state'] = 'enabled'
+    b4['state'] = 'enabled'
 #    print(combs[0][0], df[combs[0][1].get()].head(10))
     status.set("Status: Choose address fields, optionally edit output file, and press 'Geocode'")
     global DFrame
@@ -201,7 +203,7 @@ def Geocode(df, combs):
         except:
             messagebox.showinfo("Can't Connect to Google", "Oups! Please check \
 that your API key is valid, doesn't have leading/trailing spaces, and you are \
-connected to internet!")
+connected to internet! \nYour API key looks like vNIXE0xscrmjlyV-12Nj_BvUPaw")
             return None
 
     # test
@@ -449,6 +451,10 @@ New York, NY 10003")
 # Run the program.
 if __name__ == '__main__':
     root = Tk()
+
+    # Quick workaround: Window background is white on Mac while buttons ... are grey.
+    root.configure(background='grey91')
+
     root.title("Google Geocoding")
     ents, row = makeform(root, fields)
     root.bind('<Return>', (lambda event, e=ents: fetch(e)))
@@ -457,6 +463,8 @@ if __name__ == '__main__':
     b2 = Button(row, text='Load Sheets', command=loadxlsx)
     b2.pack(side=LEFT, padx=5, pady=5, anchor=W)
     row.pack(side=TOP, fill=X, padx=5, pady=5)
+
+
 
     row = Frame(root)
     lbl_sheet = Label(row, text="Choose Input Sheet:", width=20, anchor='w')
@@ -483,7 +491,7 @@ if __name__ == '__main__':
     row.pack(side=TOP, fill=X, padx=5, pady=5)
 
     row = Frame(root)
-    b4 = Button(row, text='Geocode', command=lambda: Geocode(DFrame, combs))
+    b4 = Button(row, text='Geocode', command=lambda: Geocode(DFrame, combs), state='disabled')
     out_lbl = Label(row, text="Output File", width=20, anchor='w')
     output = Entry(row, width=40, state='disabled')
     out_lbl.pack(side=LEFT, padx=5, pady=5)
@@ -498,5 +506,6 @@ if __name__ == '__main__':
                        relief=SUNKEN, anchor='w')
     status_bar.pack(side=BOTTOM, fill=X, padx=5, pady=5)
     row.pack(side=TOP, fill=X, padx=5, pady=5)
+
 
     root.mainloop()
