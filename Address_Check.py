@@ -453,7 +453,7 @@ if __name__ == '__main__':
     root = Tk()
 
     # Quick workaround: Window background is white on Mac while buttons ... are grey.
-    root.configure(background='grey91')
+    #root.configure(background='grey91')
 
     root.title("Google Geocoding")
     ents, row = makeform(root, fields)
