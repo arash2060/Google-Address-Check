@@ -12,7 +12,8 @@ waitlist = ['Wanna go get some press covfefe... and come back? Just kidding!',
             'A few more seconds... ...']
 print(random.choice(waitlist))
 from tkinter.ttk import *
-from pandas import ExcelFile, ExcelWriter, merge
+from pandas import ExcelFile, ExcelWriter, merge, to_numeric
+#import pandas as pd
 from datetime import datetime
 import time
 from logging import basicConfig, DEBUG
@@ -207,10 +208,14 @@ connected to internet! \nYour API key looks like vNIXE0xscrmjlyV-12Nj_BvUPaw")
             return None
 
     # test
-    geocode_result = gmaps.geocode("Indepenent Buget Office, \
+    try:
+        geocode_result = gmaps.geocode("Indepenent Buget Office, \
 New York, NY 10003")
-    print(geocode_result[0]['geometry']['location']['lat'],
-          geocode_result[0]['geometry']['location']['lng'])
+        # print(geocode_result[0]['geometry']['location']['lat'],
+        #      geocode_result[0]['geometry']['location']['lng'])
+        print("Google Connection Test Completed successfully.")
+    except:
+        print("Google Connection Test Failed.")
 
     # print(geocode_result)
     # print("DFrame\n\n", df.head())
@@ -237,7 +242,7 @@ New York, NY 10003")
         messagebox.showinfo("No Address!", "Either 'Street Address' or ''Street Number' and 'Street Name'' are required.")
         return None
     elif combs[3][1].get() != '' or combs[4][1].get() != '':
-        df['Generated_streetaddress'] = df[combs[3][1].get()] + df[combs[4][1].get()]
+        df['Generated_streetaddress'] = df[combs[3][1].get()] + " " + df[combs[4][1].get()]
     else:
         df['Generated_streetaddress'] = df[combs[2][1].get()]
 
@@ -251,6 +256,13 @@ New York, NY 10003")
         else:
             df['no_city'] = df[combs[5][1].get()]
     else:
+        try:
+            to_numeric(df[combs[7][1].get()], errors='raise')
+        except:
+            messagebox.showinfo("Error: Non-numeric Boro Codes!", "Boro code is needs to be a number\
+ between 1 and 5. Either choose a different field or no field at all. \n\nChoosing no field will \
+ result in 'New York City' assumed for all addresses.")
+            return None
         df['no_boro'] = df[combs[7][1].get()]
         df['no_city'] = df['no_boro'].map(Boros)
 
@@ -308,7 +320,7 @@ New York, NY 10003")
         df_unique.drop_duplicates(subset=add_list, keep="first", inplace=True)
         df_unique.reset_index(inplace=True)
 
-        obs = (len(df_unique.index) * 2)
+        obs = len(df_unique.index) * 2
         print('There are %s unique observations to process...' % (obs))
     else:
         add_list = ['Address']
@@ -317,7 +329,7 @@ New York, NY 10003")
         df_unique.drop_duplicates(subset=add_list, keep="first", inplace=True)
         df_unique.reset_index(inplace=True)
 
-        obs = (len(df_unique.index) * 2)
+        obs = len(df_unique.index)
         print('There are %s unique observations to process...' % (obs))
     df_unique['Gformatted_address0'] = ""
     df_unique['Glat0'] = 0
@@ -412,20 +424,28 @@ New York, NY 10003")
     # Drop the temporary variables.
     df.drop(['Generated_streetaddress'], axis=1, inplace=True)
     df_unique.drop(['Address', 'Generated_streetaddress'], axis=1, inplace=True)
-    # print(df_unique.columns.values)
     try:
         df_unique.drop(['NameAddress'], axis=1, inplace=True)
+        print('dropped')
     except:
         None
 
     # Merge back unique addresses with geocodes with original df.
-    result = merge(df, df_unique, on='Goog_ID')
-    result.drop(['index_y', 'Goog_ID'], axis=1, inplace=True)
+    result = merge(df, df_unique, on='Goog_ID', how='outer')
+    result.drop(['index_x', 'Goog_ID'], axis=1, inplace=True)
+    # Update Google output fields with new values if they already existed on the file.
+    for col in ['Gformatted_address0', 'Glat0', 'Glon0', 'GPartial0', 'Gtypes0', 'Gformatted_address1',
+                'Glat1', 'Glon1', 'GPartial1', 'Gtypes1', 'Borough0', 'Borough1', 'Gzip0', 'Gzip1',
+                'Gnumber0', 'Gnumber1', 'Gstreet0', 'Gstreet1', 'Both_Run_Same']:
+        # print(col)
+        if (col + '_y' in result.columns.values) and (col + '_x' in result.columns.values):
+            result[col] = result[col + '_y'].fillna(result[col + '_x'])
+            result.drop([col + '_y', col + '_x'], axis=1, inplace=True)
 
     # ExcelFile(output.get())
     try:
         writer = ExcelWriter(output.get())
-        result.to_excel(writer, (sheet_combo.get() + '_Geocoded')[0:-1])
+        result.to_excel(writer, 'Geocoded')
         writer.save()
         message = output.get() + "\n was successfully saved!\n There were %s queries made to Google Maps API" % (count_query)
         messagebox.showinfo('Success', message)
@@ -433,7 +453,7 @@ New York, NY 10003")
         writer = ExcelWriter(path.join(directory, "Google_Geocoded_" +
                                        time.strftime("%Y%m%d-%H%M%S") +
                                        ".xlsx").encode().decode())
-        result.to_excel(writer, sheet_combo.get() + '_Geocoded')
+        result.to_excel(writer, 'Geocoded')
         writer.save()
         message = ("Couldn't write to " + output.get() + "\n saved Google_Geocoded_"
                     + time.strftime("%Y%m%d-%H%M%S") +".xlsx to the same directory.\n There were %s queries made to Google Maps API" % (count_query))
