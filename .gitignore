@@ -1,6 +1,22 @@
 #Enable below to ignore .gitignore itself.
 #.gitignore
-Address_Check.log
+
+# logs may contain address info.
+*.log
 
 # This file keeps the api keys so that you don't have to enter it every time.
 API_Keys.cfg
+
+# I created a virtual environment that only has the required packages. 
+# This is essential for getting a small executable file using pyinstaller.
+/venv
+
+# dist related files:
+# pyinstaller --onefile --icon=icon_geocoding_Cqf_icon.ico Address_Check.py --exclude scipy --exclude matplotlib
+/dist
+/build
+/sandbox
+/__pycache__
+icon_geocoding_Cqf_icon.ico
+Address_Check.spec
+

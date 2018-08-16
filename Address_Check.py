@@ -1,4 +1,5 @@
 print('Loading ...')
+import logging
 from googlemaps import Client
 from numpy import number, issubdtype
 from os import path, remove
@@ -16,12 +17,27 @@ from pandas import ExcelFile, ExcelWriter, merge, to_numeric
 #import pandas as pd
 from datetime import datetime
 import time
-from logging import basicConfig, DEBUG
+import sys
+
+class Logger(object):
+    def __init__(self, filename="Default.log"):
+        self.terminal = sys.stdout
+        self.log = open(filename, "a")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+sys.stderr = Logger("errors.log")
+sys.stdout = Logger("output.log")
+
+logging.basicConfig(filename='./Address_Check.log', level=logging.DEBUG)
+
 
 print('Almost ready!')
 # Logging includes private information to the log i.e. Google API Key and
 # the addresses searched. You should add ./Address_Check.log to .gitignore
-basicConfig(filename='./Address_Check.log', level=DEBUG)
+
 
 fields = ['Google API Key', 'Input File']
 combos = ['Business Name:', 'Legal Name:', 'Street Address:', 'Street Number:',
@@ -331,6 +347,7 @@ New York, NY 10003")
 
         obs = len(df_unique.index)
         print('There are %s unique observations to process...' % (obs))
+
     df_unique['Gformatted_address0'] = ""
     df_unique['Glat0'] = 0
     df_unique['Glon0'] = 0
@@ -448,7 +465,6 @@ New York, NY 10003")
         result.to_excel(writer, 'Geocoded')
         writer.save()
         message = output.get() + "\n was successfully saved!\n There were %s queries made to Google Maps API" % (count_query)
-        messagebox.showinfo('Success', message)
     except:
         writer = ExcelWriter(path.join(directory, "Google_Geocoded_" +
                                        time.strftime("%Y%m%d-%H%M%S") +
@@ -457,8 +473,8 @@ New York, NY 10003")
         writer.save()
         message = ("Couldn't write to " + output.get() + "\n saved Google_Geocoded_"
                     + time.strftime("%Y%m%d-%H%M%S") +".xlsx to the same directory.\n There were %s queries made to Google Maps API" % (count_query))
-        messagebox.showinfo('Access Denied!', message)
 #   remove the recovery file.
+
     remove(path.join(directory, "GOOGLE_recovery.xlsx").encode().decode())
     print('Processed data and saved: ', output.get())
 
@@ -466,6 +482,8 @@ New York, NY 10003")
     t = (endTime - startTime) / 60
     status.set('Status: Done. It took %s minutes to make %s queries.' % (round(t, 2), count_query))
     print('Took %s minutes to run.' % round(t, 2))
+
+    messagebox.showinfo('Success!', message)
 
 
 # Run the program.
