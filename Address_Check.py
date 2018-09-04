@@ -438,18 +438,9 @@ New York, NY 10003")
     df_unique['Both_Run_Same'] = (df_unique['Gformatted_address1'] ==
                                   df_unique['Gformatted_address0'])
 
-    # Drop the temporary variables.
-    df.drop(['Generated_streetaddress'], axis=1, inplace=True)
-    df_unique.drop(['Address', 'Generated_streetaddress'], axis=1, inplace=True)
-    try:
-        df_unique.drop(['NameAddress'], axis=1, inplace=True)
-        print('dropped')
-    except:
-        None
-
     # Merge back unique addresses with geocodes with original df.
-    result = merge(df, df_unique, on='Goog_ID', how='outer')
-    result.drop(['index_x', 'Goog_ID'], axis=1, inplace=True)
+    result = merge(df, df_unique, on=add_list, how='outer')
+    result.drop(['index_x', 'Goog_ID_x', 'Goog_ID_y'], axis=1, inplace=True)
     # Update Google output fields with new values if they already existed on the file.
     for col in ['Gformatted_address0', 'Glat0', 'Glon0', 'GPartial0', 'Gtypes0', 'Gformatted_address1',
                 'Glat1', 'Glon1', 'GPartial1', 'Gtypes1', 'Borough0', 'Borough1', 'Gzip0', 'Gzip1',
@@ -458,6 +449,18 @@ New York, NY 10003")
         if (col + '_y' in result.columns.values) and (col + '_x' in result.columns.values):
             result[col] = result[col + '_y'].fillna(result[col + '_x'])
             result.drop([col + '_y', col + '_x'], axis=1, inplace=True)
+
+       # Drop the temporary variables.
+    try:
+        result.drop(['Generated_streetaddress_x','Generated_streetaddress_y'], axis=1, inplace=True)
+        result.drop(['Address_x', 'Address_y'], axis=1, inplace=True)
+    except:
+        None
+    try:
+        result.drop(['NameAddress'], axis=1, inplace=True)
+        print('dropped')
+    except:
+        None
 
     # ExcelFile(output.get())
     try:
