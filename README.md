@@ -9,4 +9,4 @@ Since Google API is not free, and API queries are not fast, I use this program t
 Another advantage of this program is that it can search for business names in Google Maps.
 
 # Preview
-See preview.png
+![](https://github.com/arash2060/Google-Address-Check/blob/master/preview.png)
