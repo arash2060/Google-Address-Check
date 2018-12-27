@@ -1,3 +1,10 @@
+'''
+Possible Improvements:
+    Removing duplicates should be done separately for addresses and address+names before geocoding. Currently, it's done
+    all together.
+
+    Bug: when a city is entered, no_boro doesn't get compiled. This causes an error without any error messages.
+'''
 print('Loading ...')
 import logging
 from googlemaps import Client
@@ -328,8 +335,8 @@ New York, NY 10003")
     df.reset_index(inplace=True)
     df['Goog_ID'] = df.index
     if (second_run_state.get() is True and
-        combs[0][1].get() != "" and
-        combs[1][1].get() != ""):
+        (combs[0][1].get() != "" or
+         combs[1][1].get() != "")):
         add_list = ['Address', 'NameAddress']
         # Create a dataframe with unique observations on add_list
         df_unique = df[['Address', 'NameAddress', 'Generated_streetaddress', 'Goog_ID']].copy()
