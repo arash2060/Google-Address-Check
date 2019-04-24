@@ -21,7 +21,7 @@ waitlist = ['Wanna go get some press covfefe... and come back? Just kidding!',
 print(random.choice(waitlist))
 from tkinter.ttk import *
 from pandas import ExcelFile, ExcelWriter, merge, to_numeric
-#import pandas as pd
+import pandas as pd
 from datetime import datetime
 import time
 import sys
@@ -123,7 +123,9 @@ def browsexlsx():
     root1.withdraw()
     # possible other option: multifile=1
     # '.xls*' doesn't work on Mac.
-    filenames = askopenfilename(parent=root, filetypes=[('Excel files', ['.xlsx','.xls']), ('All files', '.*')],
+    filenames = askopenfilename(parent=root, filetypes=[('Excel files', ['.xlsx','.xls']), 
+                                                        ('Comma Separated Files', '.csv'),
+                                                        ('All files', '.*')],
                                 initialdir=path.dirname(r"Z:\EAD\DOL Data\QCEW to RPAD address merge\forgbat"))
     # response = root1.tk.splitlist(filenames)
     # for f in response:
@@ -137,24 +139,27 @@ def loadxlsx():
     Get the sheet names in the chosen excel file.
     '''
     filename = ents[1][1].get()
-    if (filename.endswith(".xlsx") or filename.endswith(".xls")):
+    if (filename.endswith(".xlsx") or filename.endswith(".xls") or filename.endswith(".csv")):
         # Read in the Load The Sheets.
         print("Processing: %s" % filename.encode().decode())
         f = path.basename(filename)
         status.set("Status: loading sheets of %s" % f.encode().decode())
-        adds = ExcelFile(filename)
-        print("This Excel file includes these sheets: %s" % adds.sheet_names)
         sheet_combo['state'] = 'enabled'
         frow['state'] = 'enabled'
         b3['state'] = 'enabled'
         output['state'] = 'enabled'
-        sheet_combo['values'] = adds.sheet_names
+        if filename.endswith(".csv")==False:
+            adds = ExcelFile(filename)
+            print("Your Excel file includes these sheets: %s" % adds.sheet_names)
+            sheet_combo['values'] = adds.sheet_names
+        else:
+            sheet_combo['values'] = ["Not Applicable: CSV File"]
         output.delete(0, END)
-        output.insert(0, filename.replace(".xls", "_out.xls"))
+        output.insert(0, filename.replace(".csv", "_out.csv"))
         sheet_combo.current(0)
         status.set("Status: Choose which sheet of %s to process and press 'Load Fields'" % f.encode().decode())
     else:
-        messagebox.showinfo(title="Not Excel File", message="Enter and Excel File")
+        messagebox.showinfo(title="Not Excel or CSV File", message="Enter an Excel File. If it is a CSV file, make sure its extension is .csv")
 
 
 def loadfields():
@@ -165,17 +170,21 @@ def loadfields():
     filename = ents[1][1].get()
     f = path.basename(filename)
     status.set("Status: loading data and column names of %s" % f.encode().decode())
-    adds = ExcelFile(filename)
-    sheet = sheet_combo.get()
-#   if first row is not entered, assume 1 and set the form to 1.
+    
+    #   if first row is not entered, assume 1 and set the form to 1.
     if frow.get() == "":
         frow.insert(0, 1)
         first_row = 1
     else:
         first_row = int(frow.get())
-    print("%s and %s onwards chosen." % (sheet, first_row))
-    df = adds.parse(sheet, skiprows=first_row - 1)
-    #print(df.columns.values)
+    if f.endswith(".csv")==False:
+        adds = ExcelFile(filename)
+        sheet = sheet_combo.get()
+        print("%s and %s onwards chosen." % (sheet, first_row))
+        df = adds.parse(sheet, skiprows=first_row - 1)
+    else:
+        df = pd.read_csv(filename, header=first_row - 1, low_memory=False)
+    # print(df.columns.values)
     print("There are %s observations on this file." % len(df.index))
     ['Business Name:', 'Street Number:',
      'Street Name:', 'City/Borough:', 'Zipcode:', 'Boro Code:']
@@ -201,9 +210,6 @@ def loadfields():
     global DFrame
     DFrame = df
     return df
-
-
-
 
 
 def Geocode(df, combs):
@@ -420,10 +426,8 @@ New York, NY 10003")
                            ] = ('Not Found', 0, 0, str([0]))
                 # Save a temporary recovery file
                 if index % 500 ==0:
-                    writer = ExcelWriter(path.join(directory, "GOOGLE_recovery.xlsx").encode().decode())
-                    df_unique.to_excel(writer, 'Sheet1')
-                    writer.save()
-                    print("Recovery File GOOGLE_recovery.xlsx Saved when index was %s at %s" % (index, datetime.now()))
+                    df_unique.to_csv(path.join(directory, "GOOGLE_recovery.csv").encode().decode())
+                    print("Recovery File GOOGLE_recovery.csv Saved when index was %s at %s" % (index, datetime.now()))
         # Extract some address components. "THESE CAN BE IMPROVED"
         df_unique['Gzip' + str(i)] = 0
         pat2 = r".*NY ([0-9]{5}).*"
@@ -471,21 +475,34 @@ New York, NY 10003")
 
     # ExcelFile(output.get())
     try:
-        writer = ExcelWriter(output.get())
-        result.to_excel(writer, 'Geocoded')
-        writer.save()
-        message = output.get() + "\n was successfully saved!\n There were %s queries made to Google Maps API" % (count_query)
+        outfile = output.get()
+        if outfile.endswith(".csv") is False:
+            writer = ExcelWriter(outfile)
+            result.to_excel(writer, 'Geocoded')
+            writer.save()
+        else:
+            if path.exists(outfile.decode().encode()) is False:
+                result.to_csv(outfile)
+        message = outfile + "\n was successfully saved!\n There were %s queries made to Google Maps API" % (count_query)
     except:
-        writer = ExcelWriter(path.join(directory, "Google_Geocoded_" +
-                                       time.strftime("%Y%m%d-%H%M%S") +
-                                       ".xlsx").encode().decode())
-        result.to_excel(writer, 'Geocoded')
-        writer.save()
-        message = ("Couldn't write to " + output.get() + "\n saved Google_Geocoded_"
-                    + time.strftime("%Y%m%d-%H%M%S") +".xlsx to the same directory.\n There were %s queries made to Google Maps API" % (count_query))
+        if outfile.endswith(".csv") is False:
+            new_outfile = path.join(directory, "Google_Geocoded_" +
+                                           time.strftime("%Y%m%d-%H%M%S") +
+                                           ".xlsx").encode().decode()
+            writer = ExcelWriter()
+            result.to_excel(writer, 'Geocoded')
+            writer.save()
+        else:
+            new_outfile = path.join(directory, "Google_Geocoded_" +
+                                           time.strftime("%Y%m%d-%H%M%S") +
+                                           ".csv").encode().decode()
+            result.to_csv(new_outfile)
+        
+        message = ("Couldn't write to " + output.get() + ".\n Saved " +
+                    path.basename(new_outfile) + " to the same directory.\n There were %s queries made to Google Maps API" % (count_query))
 #   remove the recovery file.
 
-    remove(path.join(directory, "GOOGLE_recovery.xlsx").encode().decode())
+    remove(path.join(directory, "GOOGLE_recovery.csv").encode().decode())
     print('Processed data and saved: ', output.get())
 
     endTime = time.time()
